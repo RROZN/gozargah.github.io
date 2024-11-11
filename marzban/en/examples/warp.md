@@ -1,92 +1,92 @@
 ---
-title: فعال سازی CloudFlare Warp
+title: Activating CloudFlare Warp
 ---
 
-# فعال سازی CloudFlare Warp
+# Activating CloudFlare Warp
 
-با استفاده از این آموزش میتوانید برخی محدودیت هایی که از سمت شرکت های بزرگ مثل google و spotify روی IP شما اعمال شده رو برطرف کنید و بدون مشکل از سرویس ها شون استفاده کنید.
+Using this guide, you can bypass some restrictions imposed on your IP by large companies like Google and Spotify, and use their services without any issues.
 
 ::: warning
-توجه داشته باشید برای کانفیگ های Warp محدودیت اتصال حداکثر 5 دستگاه همزمان وجود دارد ، برای حل مشکل میتوانید از چند کانفیگ استفاده کنید.
+Please note that Warp configurations have a connection limit of maximum 5 simultaneous devices. To solve this issue, you can use multiple configurations.
 :::
 
-## قدم اول : ساخت کانفیگ Wireguard
+## Step One: Creating Wireguard Configuration
 
-### روش اول :با استفاده از ویندوز
+### First Method: Using Windows
 
-- ابتدا باید `Asset` مورد نیاز رو از بخش [releases](https://github.com/ViRb3/wgcf/releases) دانلود کنید ، این فایل بسته به پردازنده متفاوت می باشد.
-- نام فایل `Asset` رو به `wgcf` تغییر بدید.
-- حالا در قسمت ادرس دهی File Explorer عبارت `cmd.exe` رو وارد کنید.
+- First, you need to download the required `Asset` from the [releases](https://github.com/ViRb3/wgcf/releases) section. This file varies depending on your processor.
+- Rename the `Asset` file to `wgcf`.
+- Now in the File Explorer address bar, enter `cmd.exe`.
 
 ![image](https://github.com/Gozargah/gozargah.github.io/assets/50927468/fb9f3eae-8390-45a5-a7b3-c50db4aa82a1)
 
-- در ترمینال باز شده عبارت `wgcf.exe` رو وارد کنید.
-- یک بار دستور `wgcf.exe register` و سپس `wgcf.exe generate` رو وارد کنید.
-- فایل جدیدی به اسم `wgcf-profile.conf` ایجاد شده و این فایل `Wireguard` مورد نیاز ما می باشد.
-- کانفیگ شما امادست و میتونید از اون استفاده کنید.
+- In the opened terminal, enter `wgcf.exe`.
+- Enter the command `wgcf.exe register` once and then `wgcf.exe generate`.
+- A new file named `wgcf-profile.conf` will be created, and this is the Wireguard file we need.
+- Your configuration is ready, and you can use it.
 
-### روش دوم : با استفاده از لینوکس
+### Second Method: Using Linux
 
-- ابتدا باید `Asset` مورد نیاز رو از بخش [releases](https://github.com/ViRb3/wgcf/releases) دانلود کنید ، این فایل بسته به پردازنده متفاوت می باشد.
-- با دستور `wget` میتوانید این کار را انجام دهید.
+- First, you need to download the required `Asset` from the [releases](https://github.com/ViRb3/wgcf/releases) section. This file varies depending on your processor.
+- You can do this using the `wget` command.
 
-برای پردازنده های معماری AMD64 :
+For AMD64 architecture processors:
 ```bash
 wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_amd64
 ```
-برای پردازنده های معماری ARM64 :
+For ARM64 architecture processors:
 ```bash
 wget https://github.com/ViRb3/wgcf/releases/download/v2.2.22/wgcf_2.2.22_linux_arm64
 ```
-مسیر فایل رو به `/usr/bin/` تغییر داده و اسم اون رو به `wgcf` تغییر بدید.
+Change the file path to `/usr/bin/` and rename it to `wgcf`.
 
-برای پردازنده های معماری AMD64 :
+For AMD64 architecture processors:
 ```bash
 mv wgcf_2.2.22_linux_amd64 /usr/bin/wgcf
 chmod +x /usr/bin/wgcf
 ```
-برای پردازنده های معماری ARM64 :
+For ARM64 architecture processors:
 ```bash
 mv wgcf_2.2.22_linux_arm64 /usr/bin/wgcf
 chmod +x /usr/bin/wgcf
 ```
-سپس با استفاده از این 2 دستور کانفیگ رو ایجاد کنید.
+Then use these 2 commands to create the configuration:
 ```bash
 wgcf register
 wgcf generate
 ```
-فایلی با نام `wgcf-profile.conf` ساخته شده و این کانفیگ مورد نیاز ما می باشد.
+A file named `wgcf-profile.conf` will be created, and this is the configuration we need.
 
-## قدم دوم : استفاده از Warp+ (اختیاری)
+## Step Two: Using Warp+ (Optional)
 
-- برای دریافت لایسنس و استفاده از Warp+ میتونید از طریق [این](https://t.me/generatewarpplusbot) بات تلگرام اقدام به دریافت `license_key` کنید.
-- بعد از دریافت `license_key` باید اون رو در فایل `wgcf-account.toml` جایگزین کنید.
-::: tip نکته
- این تغییر رو میتونید در لینوکس با `nano` و در ویندوز با `Notepad` و یا هر نرم افزار دیگه ای انجام بدید.
+- To receive a license and use Warp+, you can get a `license_key` through [this](https://t.me/generatewarpplusbot) Telegram bot.
+- After receiving the `license_key`, you need to replace it in the `wgcf-account.toml` file.
+::: tip Note
+You can make this change using `nano` in Linux and `Notepad` or any other software in Windows.
 :::
 ::: details Windows
-برای استفاده از کامند ها روی ویندوز نیاز دارید به جای استفاده از کامند `wgcf` از `wgcf.exe` استفاده کنید.
+To use commands on Windows, you need to use `wgcf.exe` instead of `wgcf`.
 :::
-سپس باید اطلاعات کانفیگ ها رو بروزرسانی کنید.
+Then you need to update the configuration information:
 ```bash
 wgcf update
 ```
-سپس باید فایل کانفیگ جدیدی ایجاد کنید.
+Then you need to create a new configuration file:
 ```bash
 wgcf generate
 ```
 
-## قدم سوم : فعالسازی Warp روی مرزبان
+## Step Three: Activating Warp on Marzban
 
-### روش اول : با استفاده از هسته Xray
+### First Method: Using Xray Core
 
-::: warning توجه
-- این روش فقط برای نسخه Xray 1.8.3 و یا بالاتر پیشنهاد میشود ، در نسخه های قدیمی تر احتمالا با مشکل Memory Leak مواجه خواهید شد.
-- در صورتی که ورژن `Xray` شما پایین تر از این نسخه می باشد می توانید به کمک [ اموزش تغییر ورژن Xray-core](/examples/change-xray-version) ورژن `Xray` خودتون رو ارتقا بدید.
+::: warning Note
+- This method is only recommended for Xray version 1.8.3 or higher. In older versions, you might encounter Memory Leak issues.
+- If your `Xray` version is lower than this version, you can upgrade your `Xray` version using the [Xray-core version change guide](/examples/change-xray-version).
 :::
 
-- وارد بخش Core Setting در پنل مرزبان شوید.
-- ابتدا یک outbound همانند نمونه اضافه می کنیم و اطلاعات فایل `wgcf-profile.conf` را در آن جایگذاری می کنیم.
+- Go to the Core Setting section in the Marzban panel.
+- First, we add an outbound like the example and insert the information from the `wgcf-profile.conf` file into it.
 
 ```json
 {
@@ -107,22 +107,22 @@ wgcf generate
 }
 ```
 
-::: tip نکته
-در صورتی که میخواهید تمام ترافیک به صورت پیش فرض از Warp عبور کنید این Outbound رو اول قرار بدید و دیگه نیازی به انجام مرحله بعد نیست.
+::: tip Note
+If you want all traffic to go through Warp by default, place this Outbound first, and you don't need to do the next step.
 :::
 
-### روش دوم : با استفاده از هسته Wireguard
+### Second Method: Using Wireguard Core
 
-ابتدا باید پیش نیاز های استفاده از Wireguard رو روی سرور نصب کنید.
+First, you need to install Wireguard prerequisites on your server.
 
 ```bash
 sudo apt install wireguard-dkms wireguard-tools resolvconf
 ```
-اگر از اوبونتو 24 استفاده میکنید برای نصب وایرگارد از دستور زیر استفاده کنید.
+If you're using Ubuntu 24, use the following command to install wireguard:
 ```bash
 sudo apt install wireguard
 ```
-سپس باید عبارت `Table = off` رو مثل نمونه به فایل Wireguard اضافه کنید.
+Then you need to add the `Table = off` statement to the Wireguard file like the example.
 
 ```conf
 [Interface]
@@ -139,30 +139,30 @@ AllowedIPs = ::/0
 Endpoint = engage.cloudflareclient.com:2408
 ```
 
-::: warning توجه
-در صورت عدم اضافه کردن `Table = off` دسترسی شما به سرور قطع خواهد شد و دیگر نمیتوانید به سرور متصل شوید و باید از طریق وب سایت دیتاسنتر خود به سرور وارد شده و اتصال به `Warp` رو قطع کنید تا بتونید دوباره به صورت عادی ارتباط برقرار کنید.
+::: warning Note
+If you don't add `Table = off`, your access to the server will be cut off, and you won't be able to connect to the server anymore. You'll need to access the server through your datacenter's website and disconnect from `Warp` to be able to establish normal connection again.
 :::
 
-- سپس نام فایل رو از `wgcf-profile.conf` به `warp.conf` تغییر بدید.
-- فایل رو در پوشه `/etc/wireguard` در سرور قرار بدید.
+- Then rename the file from `wgcf-profile.conf` to `warp.conf`.
+- Place the file in the `/etc/wireguard` folder on the server.
 
 ```bash
 sudo mv wgcf-profile.conf /etc/wireguard/warp.conf
 ```
-- با دستور پایین Wireguard رو فعال کنید.
+- Enable Wireguard with the command below.
 
 ```bash
 sudo systemctl enable --now wg-quick@warp
 ```
 
-با این دستور نیز می‌توانید `Warp` را غیر فعال کنید
+You can also disable `Warp` with this command:
 
 ```bash
 sudo systemctl disable --now wg-quick@warp
 ```
 
-- وارد بخش Core Setting در پنل مرزبان شوید.
-- ابتدا یک outbound همانند نمونه اضافه کنید.
+- Go to the Core Setting section in the Marzban panel.
+- First, add an outbound like the example.
 
 ```json
 {
@@ -177,13 +177,13 @@ sudo systemctl disable --now wg-quick@warp
 }
 ```
 
-::: tip نکته
-در صورتی که میخواهید تمام ترافیک به صورت پیش فرض از Warp عبور کنید این Outbound رو اول قرار بدید و دیگه نیازی به انجام مرحله بعد نیست.
+::: tip Note
+If you want all traffic to go through Warp by default, place this Outbound first, and you don't need to do the next step.
 :::
 
-## قدم چهارم : تنظیمات بخش routing
+## Step Four: Routing Settings
 
-ابتدا یک `rule` در بخش `routing` همانند نمونه اضافه می کنیم.
+First, we add a `rule` in the `routing` section like the example.
 
 ```json
 {
@@ -193,7 +193,7 @@ sudo systemctl disable --now wg-quick@warp
 }
 ```
 
-حال باید وب سایت های دلخواه خودتون رو مثل نمونه اضافه کنید.
+Now you need to add your desired websites like the example.
 
 ```json
 {
@@ -210,10 +210,10 @@ sudo systemctl disable --now wg-quick@warp
 }
 ```
 
-تغییرات رو ذخیره می کنیم ، هم اکنون میتوانید از `Warp` استفاده کنید.
+Save the changes, and now you can use `Warp`.
 ::: details Marzban-Node
 
-- در صورتی که با کمک هسته xray از `Warp` استفاده می کنید نیاز به انجام تغییر در نود ندارید و به صورت اتوماتیک در نود نیز اعمال می شود.
+- If you're using `Warp` with xray core, you don't need to make changes in the node as it's automatically applied.
 
-- در صورتی که از هسته `Wireguard` استفاده می کنید باید مرحله سوم ، روش دوم رو روی نود هم انجام دهید.
-  :::
+- If you're using the `Wireguard` core, you need to perform step three, second method on the node as well.
+:::
