@@ -1,48 +1,42 @@
 ---
-title: راه‌اندازی همه چیز روی یک پورت
+title: Setting Up Everything on One Port
 ---
 
-# یک پورت برای همه
-به کمک این آموزش می‌توانید تمام ارتباطات با سرور خود (پنل، کانفیگ‌های TLSدار و کانفیگ‌های REALITY) را از طریق یک (یا دو) پورت انجام دهید.
-هدف از این کار، طبیعی‌تر شدن ارتباطات سرور، دور زدن محدودیت‌های روی یک پورت یا مواردی از این دست است.
+# One Port for Everything
+Using this guide, you can handle all communications with your server (panel, TLS-enabled configs, and REALITY configs) through one (or two) ports.
+The purpose of this setup is to make server communications more natural, bypass restrictions on a single port, or address similar needs.
 
-
-::: tip نکته
-اگر پورت پنل خود را در طی زمان عوض کرده‌اید و می‌خواهید لینک‌های سابسکریپشن قبلی همچنان کار کنند هم می‌توانید با این آموزش، HAProxy را روی پورت قدیمی listen کرده و ترافیک ورودی را به پورت لوکال جدید بفرستید تا هر دو لینک سابسکریپشن کار کنند. برای این کار فقط کافیست پورت قبلی خود هم مثل پورت ۴۴۳ اضافه کنید.
+::: tip Note
+If you have changed your panel port over time and want previous subscription links to continue working, you can use this guide to make HAProxy listen on the old port and forward incoming traffic to the new local port so that both subscription links work. To do this, just add your previous port like port 443.
 :::
 
+In this guide, we'll use HAProxy to achieve our goal. Throughout the guide, we assume that the panel subdomain is panel.example.com,
+the subdomain for TLS-enabled configs is sub.example.com, and the SNI address used in the REALITY config is reality.com.
 
-ما در این آموزش از ابزار HAProxy برای رسیدن به هدف خود استفاده می‌کنیم. در ادامه آموزش، فرض می‌شود که ساب‌دامنه‌ی پنل panel.example.com،
-ساب‌دامنه‌ی مربوط به کانفیگ‌های TLSدار sub.example.com و آدرس SNI استفاده شده در کانفیگ ریلیتی reality.com است.
+So in this guide, we'll first install and configure HAProxy, then make necessary changes to the configs and panel to accept all traffic on one port. Finally, some additional notes are provided.
 
-پس در ادامه‌ی این آموزش ابتدا HAProxy را نصب و پیکربندی کرده و سپس تغییرات لازم را در کانفیگ‌ها و پنل ایجاد می‌کنیم تا تمام ترافیک را روی یک پورت قبول کنند. در آخر هم برخی نکات اضافی آمده است.
-
-
-::: warning توجه
-چنان‌چه قبلا از HAProxy برای گرفتن SSL برای پنل خود استفاده کرده‌اید، باید از یک روش دیگر (پیشنهاد ما UNIVCORN) برای پنل SSL بگیرید تا با این تنظیمات تداخل پیدا نکند
+::: warning Attention
+If you have previously used HAProxy to obtain SSL for your panel, you should use another method (we recommend UNIVCORN) to get SSL for the panel to avoid conflicts with these settings.
 :::
 
+## Installing and Configuring HAProxy
 
-## نصب و پیکربندی HAProxy
+::: tip Note
+In this guide, we install HAProxy directly on the server; if you prefer, you can install it in Docker yourself.
 
-::: tip نکته
-ما در این آموزش HAProxy را به صورت مستقیم روی سرور نصب می‌کنیم؛ چنانچه تمایل داشتید می‌توانید خودتان آن را در داکر هم نصب کنید.
-
-همچنین اگر در آینده قصد اعمال ruleهای پیچیده‌تر خواهید داشت، فراموش نکنید که HAProxy را از مخزن اصلی خود نصب کنید و نه از مخازن لینوکس.
+Also, if you plan to implement more complex rules in the future, remember to install HAProxy from its main repository and not from Linux repositories.
 :::
 
-
-ابتدا برای نصب دستورات زیر را بزنید:
+First, run these commands for installation:
 
 ```bash
 apt update
 apt install -y haproxy
 ```
 
-پس از نصب، فایل پیکربندی HAProxy در آدرس `/etc/haproxy/haproxy.cfg` قرار می‌گیرد. این فایل را با `nano` برای ویرایش باز کنید.
+After installation, the HAProxy configuration file is located at `/etc/haproxy/haproxy.cfg`. Open this file with `nano` for editing.
 
-حال، پیکربندی زیر را پس از تغییر طبق توضیحات به انتهای فایل پیکربندی اضافه کرده و سیو کنید.
-
+Now, add the following configuration to the end of the configuration file after making changes according to the instructions, and save it.
 
 ::: code-group
 ```[haproxy.cfg]
@@ -68,31 +62,28 @@ backend fallback
 backend reality
  mode tcp
  server srv1 127.0.0.1:12000 send-proxy
-
 ```
 :::
 
+HAProxy configurations consist of one or more frontends and one or more backends. Each frontend sends traffic to one of the backends based on rules defined in it. Understanding these two sections helps us better configure HAProxy.
 
-پیکربندی‌های HAProxy شامل یک یا چند frontend و یک یا چند backend هستند. هر frontend بر اساس قوانینی که در آن تعریف می‌شود ترافیک را به سمت یکی از backendها می‌فرستد. فهم این دو بخش در پیکربندی بهتر HAProxy به ما کمک می‌کند.
+Looking at this configuration, you can see that HAProxy listens on port 443 of the server and receives all traffic. Then, based on the SNI of the incoming traffic, it forwards it to a "local" port on the server, allowing us to differentiate between different types of traffic.
 
-با دقت در این پیکربندی می‌توانید متوجه شوید که با آن، HAProxy بر روی پورت ۴۴۳ سرور گوش داده و تمام ترافیک را دریافت می‌کند. سپس بر اساس sni ترافیک دریافتی، آن را روی یک پورت «لوکال» سرور فوروارد می‌کند و از این طریق می‌توانیم بین ترافیک‌های مختلف تفاوت قائل شویم.
-
-
-::: tip نکته
-در این پیکربندی یک backend پیش‌فرض با استفاده از default_backend تعریف شده است که اگر ترافیک ورودی مربوط به هر چیزی بجز دو sni تعریف شده بود، آن را به این backend می‌فرستد. شما می‌توانید این تکه از کد را بردارید تا ترافیک‌های غیر از sniهای مشخص شده مسدود شوند.
+::: tip Note
+In this configuration, a default backend is defined using default_backend, which handles any incoming traffic that doesn't match the two defined SNIs. You can remove this part of the code to block traffic that doesn't match the specified SNIs.
 :::
 
-پس از جای‌گذاری دامنه‌های خود و قراردادن این پیکربندی در انتهای فایل گفته شده، با دستور زیر HAProxy را ریستارت کرده تا کار ما با آن در این مرحله تمام شود.
+After replacing your domains and placing this configuration at the end of the specified file, restart HAProxy with the following command to complete this stage.
 
 ```bash
 systemctl restart haproxy
 ```
 
-## آماده‌سازی کانفیگ‌ها
-### آماده‌سازی کانفیگ REALITY
- فرض کنید که شما می‌خواهید چند اینباند مختلف برای هر نود خود یا چند اینباند مختلف با sniهای مختلف داشته باشید. اگر صرفاً این اینباندها را زیر هم قرار داده و پورت آن‌ها را یکسان کنید، اتصال با اختلال روبرو می‌شود و عملا امکان برقراری ارتباط وجود ندارد.
+## Preparing Configurations
+### Preparing REALITY Configuration
+Let's say you want to have several different inbounds for each node or several different inbounds with different SNIs. If you simply place these inbounds one after another and set their ports to be the same, the connection will be disrupted and effectively impossible to establish.
 
- تک پورت کردن کانفیگ‌ها این مشکل را حل می‌کند. برای این کار، تنظیمات کانفیگ‌های خود را باید به شکل زیر تغییر دهید (به خط‌های ۳ و ۴ و ۱۳ توجه کنید):
+Single-porting configs solves this problem. To do this, you need to change your config settings as follows (pay attention to lines 3, 4, and 13):
 
 ::: code-group
 ```json{3-4,13} [xray_config.json]
@@ -135,13 +126,12 @@ systemctl restart haproxy
 ```
 :::
 
+With these changes, your inbound listens on 127.0.0.1 (localhost) instead of 0.0.0.0, and you can create as many inbounds as you want in this way (with different local ports) and differentiate between them in HAProxy based on SNI.
 
-با این تغییرات، اینباند شما بجای گوش دادن روی 0.0.0.0، روی 127.0.0.1 یا همان لوکال، گوش می‌دهد و می‌توانید هر تعداد اینباند که می‌خواهید به این شکل ساخته (با پورت‌های لوکال متفاوت) و در HAProxy براساس sni بین آن‌ها تفکیک قائل شوید.
+### Preparing TLS-enabled Configurations
+To have all types of TLS-enabled configs on one port, we use fallback (if you've previously used fallback for single-porting, skip this step and just match your fallback config port with HAProxy).
 
-### آماده‌سازی کانفیگ‌های TLSدار
-برای اینکه تمام انواع کانفیگ‌های TLSدار را روی یک پورت داشته باشیم، از فالبک استفاده می‌کنیم (اگر پیش از این از فالبک برای تک‌پورت کردن استفاده کرده‌اید، این مرحله را بگذرید و فقط پورت کانفیگ فالبک خود را با HAProxy یکسان کنید)
-
-ما ابتدا به یک اینباند فالبک نیاز داریم. به این منظور می‌توانید از اینباند زیر به عنوان نمونه استفاده کنید:
+First, we need a fallback inbound. For this purpose, you can use the following inbound as an example:
 
 ::: code-group
 ```json{3-4,13} [xray_config.json]
@@ -200,10 +190,9 @@ systemctl restart haproxy
 ```
 :::
 
+To better use this feature, it's good to understand its concept and operation. Fallback generally works in such a way that if the incoming traffic matches this inbound, it accepts it, and if not, it sends it to other inbounds based on the path. So, after placing the above inbound with fallback, we now define several other inbounds each with the path specified in the fallback inbound (if you already have such inbounds, just change their listen value to the defined values (@vless-ws, @vmess-ws, and @trojan-ws) and put their paths in the fallback inbound.
 
-برای استفاده‌ی بهتر از این امکان، خوب است مفهوم و کارکرد آن را یاد بگیریم. فالبک به‌طور کلی به این صورت عمل می‌کند که اگر ترافیک ورودی مطابق با این اینباند بود آن را قبول کرده و اگر نبود، برحسب path آن را به دیگر اینباندها می‌دهد. پس، بعد از قرار دادن اینباند بالا با فالبک، حال چند اینباند دیگر هریک با path گفته شده در اینباند فالبک تعریف می‌کنیم (اگر از قبل چنین اینباندهایی دارید کافی‌ست مقدار listen آن‌ها را فقط به مقدارهای تعریف‌شده (@vless-ws و @vmess-ws و @trojan-ws) تغییر داده و path آن‌ها هم در اینباند فالبک قرار دهید.
-
-پس اینباند فالبک براساس path هریک از ترافیک‌های ورودی را به سمت دیگر اینباندها می‌فرستد:
+So the fallback inbound sends each incoming traffic to other inbounds based on path:
 
 ```
 path = /lw     ->    listen: "@vless-ws"
@@ -211,56 +200,48 @@ path = /mw     ->    listen: "@vmess-ws"
 path = /tw     ->    listen: "@trojan-ws"
 ```
 
-پس طبق مثال بالا کافی‌ست بخش‌های listen و path اینباندهای خود را با فالبک همسان کنید تا تمام کانفیگ‌ها روی یک پورت اجرا شوند.
+So according to the above example, just match the listen and path sections of your inbounds with the fallback to run all configs on one port.
 
-
-::: tip نکته
-استفاده از فالبک، بار پردازشی سرور را افزایش می‌دهد. شما می‌توانید برای هر کانفیگ خود یک ساب دامنه متفاوت تعیین کرده و با استفاده از همان HAProxy و بدون نیاز به فالبک، کانفیگ‌های TLSدار را هم تک‌پورت کنید.
+::: tip Note
+Using fallback increases the server's processing load. You can assign a different subdomain for each of your configs and use HAProxy without the need for fallback to single-port TLS-enabled configs.
 :::
 
-
-::: warning توجه
-توجه کنید که در اینباندهایی که مقدار listen آن‌ها به شکل @xxx هست و در فالبک استفاده شده‌اند، خط مربوط به port را پاک کنید
+::: warning Attention
+Note that in inbounds where the listen value is in the form @xxx and used in fallback, remove the port line
 :::
 
-
-حال اگر با استفاده از این روش فالبک اینباندها را تک‌پورت کرده‌اید، وارد فایل `.env` شده و متغیر زیر را مساوی با تگ اینباند فالبک خود قرار دهید:
+Now if you've single-ported the inbounds using this fallback method, enter the `.env` file and set the following variable equal to your fallback inbound tag:
 
 ```
 XRAY_FALLBACKS_INBOUND_TAG = "TROJAN_FALLBACK_INBOUND"
 ```
 
-## آماده‌سازی پنل
-همان‌طور که گفته شد هدف ما داشتن تمام ارتباطات از جمله پنل (لینک سابسکریپشن) بر روی یک پورت است. پیش‌تر تنظیمات مربوط به پنل را در پیکربندی HAProxy وارد کردیم و در این مرحله کافیست تا پورتی که پنل روی آن گوش می‌دهد را با HAProxy همسان کنیم. پس برای اینکار کافی‌ست با ویرایش فایل `.env` متغیرهای زیر را برابر با مقدار تعریف‌شده (یا هرچیزی که در HAProxy وارد کرده‌اید) کنید:
-
+## Preparing the Panel
+As mentioned, our goal is to have all communications including the panel (subscription link) on one port. We previously entered the panel settings in the HAProxy configuration, and at this stage, we just need to match the port that the panel listens on with HAProxy. So for this, just edit the `.env` file and set the following variables equal to the defined value (or whatever you entered in HAProxy):
 
 ```
 UVICORN_HOST = "127.0.0.1"
 UVICORN_PORT = 10000
 ```
 
-
-حال مرزبان را ریستارت کنید:
+Now restart Marzban:
 
 ```bash
 marzban restart
 ```
 
-## آماده‌سازی هاست ستینگز
-چون پورتی که در اینباند قرار داده‌اید یک پورت لوکال بوده و در اصل تمام ترافیک از پورت ۴۴۳ به سرور شما می‌رسد، لازم است که در قسمت هاست ستینگز کانفیگ‌هایی که ساخته‌اید خودتان پورت را به ۴۴۳ تغییر دهید وگرنه به صورت پیش‌فرض پورت‌های لوکال برای کانفیگ‌ها تعیین می‌شود.
+## Preparing Host Settings
+Since the port you placed in the inbound was a local port and all traffic actually reaches your server from port 443, you need to manually change the port to 443 in the host settings of the configs you've created, otherwise the local ports will be set for the configs by default.
 
-## نکات جانبی:
-::: warning توجه
-تنظیمات مربوط به HAProxy باید در تمام سرورهای نود هم انجام شوند، یا اینکه می‌توانید برای برخی سرورهای نود اینباند جدا تعریف کرده و مستقیم روی `0.0.0.0` لیسن کنید.
+## Additional Notes:
+::: warning Attention
+HAProxy settings must also be applied to all node servers, or you can define separate inbounds for some node servers and listen directly on `0.0.0.0`.
 :::
 
-
-::: tip توجه
-در پیکربندی قرارداده‌شده برای HAProxy تمام ترافیکی که با یکی از sniهای panel.example.com و reality.com هم‌خوانی نداشته باشد به سمت اینباند فالبک منتقل می‌شود و در نتیجه با اینکار جلوی سواستفاده از آی‌پی شما به عنوان آی‌پی تمیز کلادفلر گرفته می‌شود
+::: tip Note
+In the provided HAProxy configuration, all traffic that doesn't match either panel.example.com or reality.com SNIs is forwarded to the fallback inbound, thus preventing the misuse of your IP as a clean Cloudflare IP
 :::
 
-
-::: warning هشدار
-چنان‌چه از محدودکننده‌ی آی‌پی استفاده می‌کنید، باید عبارت `send-proxy` را در انتهای هر سرور backend از HAProxy اضافه کنید و همچنین مقدار `"acceptProxyProtocol": true` را در کانفیگ اینباند خود، مطابق نمونه‌ی قرارداده‌شده برای REALITY در بالا قرار دهید. اگر کانفیگی `send-proxy` داشته ولی `"acceptProxyProtocol": true` نداشته باشد متصل نمی‌شود.
+::: warning Warning
+If you use IP limiter, you must add the `send-proxy` phrase at the end of each server backend in HAProxy and also set the value `"acceptProxyProtocol": true` in your inbound config, as shown in the REALITY example above. If a config has `send-proxy` but doesn't have `"acceptProxyProtocol": true`, it won't connect.
 :::
-
